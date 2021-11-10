@@ -1,17 +1,23 @@
-import strawberry
-
+from ariadne import QueryType, make_executable_schema
+from ariadne.asgi import GraphQL
 from fastapi import FastAPI
-from strawberry.fastapi import GraphQLRouter
 
-@strawberry.type
-class Query:
-    @strawberry.field
-    def hello(self) -> str:
-        return "Hello World"
+type_defs = """
+    type Query {
+        hello: String!
+    }
+"""
 
-schema = strawberry.Schema(Query)
+query = QueryType()
 
-graphql_app = GraphQLRouter(schema)
+
+@query.field("hello")
+def resolve_hello(*_):
+    return "Hello world!"
+
+
+# Create executable schema instance
+schema = make_executable_schema(type_defs, query)
 
 app = FastAPI(
     title="Retro GraphQL API",
@@ -21,4 +27,4 @@ app = FastAPI(
     openapi_url='/api/openapi.json',
     redoc_url=None
 )
-app.include_router(graphql_app, prefix="/graphql")
+app.mount("/graphql", GraphQL(schema, debug=True))
