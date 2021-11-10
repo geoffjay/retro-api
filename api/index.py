@@ -1,30 +1,21 @@
-from ariadne import QueryType, make_executable_schema
+from ariadne import QueryType, gql, make_executable_schema
 from ariadne.asgi import GraphQL
-from fastapi import FastAPI
 
-type_defs = """
+type_defs = gql("""
     type Query {
         hello: String!
     }
-"""
+""")
 
+# Create type instance for Query type defined in our schema...
 query = QueryType()
 
-
+# ...and assign our resolver function to its "hello" field.
 @query.field("hello")
-def resolve_hello(*_):
-    return "Hello world!"
+def resolve_hello(_, info):
+    request = info.context["request"]
+    user_agent = request.headers.get("user-agent", "guest")
+    return "Hello, %s!" % user_agent
 
-
-# Create executable schema instance
 schema = make_executable_schema(type_defs, query)
-
-app = FastAPI(
-    title="Retro GraphQL API",
-    description="GraphQL API for retrospectives using FastAPI",
-    version="0.1.0",
-    docs_url='/api',
-    openapi_url='/api/openapi.json',
-    redoc_url=None
-)
-app.mount("/graphql", GraphQL(schema, debug=True))
+app = GraphQL(schema, debug=True)

@@ -1,2 +1,1 @@
-fastapi
-strawberry-graphql[fastapi]
+ariadne
